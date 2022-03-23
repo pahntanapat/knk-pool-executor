@@ -20,7 +20,7 @@ import gc
 from logging import Logger, getLogger
 from multiprocessing import Pipe, freeze_support, get_context, cpu_count
 from multiprocessing.connection import Connection
-from typing import _T, Any, Callable, Iterable, Iterator, List, Mapping, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Tuple, Union
 
 gc.enable()
 
