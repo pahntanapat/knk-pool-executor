@@ -1,3 +1,5 @@
+__author__ = 'Tanapat Kahabodeekanokkul (pahntanapat@gmail.com)'
+
 from concurrent.futures import (
     CancelledError,
     ThreadPoolExecutor,
@@ -12,7 +14,6 @@ from concurrent.futures._base import (
 from concurrent.futures.thread import (
     _WorkItem,
     BrokenThreadPool,
-    _global_shutdown_lock,
     _shutdown,
 )
 
@@ -156,7 +157,7 @@ class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
         self.mp_method = mp_method
 
     def submit(self, fn: Callable, *args, **kwargs) -> Future:
-        with self._shutdown_lock, _global_shutdown_lock:
+        with self._shutdown_lock:
             if self._broken:
                 raise BrokenThreadPool(self._broken)
 
