@@ -1,6 +1,5 @@
 from concurrent.futures import (
     CancelledError,
-    Executor,
     ThreadPoolExecutor,
     ProcessPoolExecutor,
     Future,
@@ -19,10 +18,8 @@ from concurrent.futures.thread import (
 
 import gc
 from logging import Logger, getLogger
-from multiprocessing import Pipe, freeze_support, get_context
+from multiprocessing import Pipe, freeze_support, get_context, cpu_count
 from multiprocessing.connection import Connection
-from os import cpu_count
-from time import sleep
 from typing import Any, Callable, Iterable, List, Mapping, Optional, Tuple, Union
 
 gc.enable()
@@ -75,6 +72,8 @@ class AWSMultiPoolFuture(Future):
 
 
 class _ProcessWorkItem(_WorkItem):
+    THREAD_SLEEP = 0.001
+
     def __init__(
         self,
         future: AWSMultiPoolFuture,
@@ -83,6 +82,7 @@ class _ProcessWorkItem(_WorkItem):
         args,
         kwargs,
         mp_method: Optional[str] = None,
+        thread_sleep: Optional[float] = 0.001
     ):
         self.future = future
         self.fn = fn
@@ -90,6 +90,9 @@ class _ProcessWorkItem(_WorkItem):
         self.kwargs = kwargs
         self.logger = logger
         self.mp_method = mp_method
+
+        if (thread_sleep) and (thread_sleep > 0):
+            self.THREAD_SLEEP = thread_sleep
 
     def run(self):
         if not self.future.set_running_or_notify_cancel():
@@ -105,7 +108,7 @@ class _ProcessWorkItem(_WorkItem):
             proc.start()
 
             while proc.is_alive() and not (main.poll(None) or self.future.cancelled()):
-                sleep(0.001)
+                proc.join(self.THREAD_SLEEP)
 
             if main.poll(0):
                 status, result = main.recv()
@@ -180,6 +183,10 @@ class AWSLambdaMultiPoolExecutor(ThreadPoolExecutor):
             if self._shutdown:
                 raise RuntimeError(
                     "cannot schedule new futures after shutdown")
+            if _shutdown:
+                raise RuntimeError(
+                    "cannot schedule new futures after interpreter shutdown"
+                )
 
             f = AWSMultiPoolFuture()
             w = _ProcessWorkItem(f, fn, self.logger, args,
