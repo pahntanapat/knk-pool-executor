@@ -143,7 +143,7 @@ class _ProcessWorkItem(_WorkItem):
             self = None
 
     @staticmethod
-    def process_worker(fn: Callable, pipe: Connection, logger: Logger, *arg, **kw):
+    def process_worker(fn: Callable, pipe: Connection, logger: Logger, /, *arg, **kw):
         try:
             result = fn(*arg, **kw)
             pipe.send([True, result])
