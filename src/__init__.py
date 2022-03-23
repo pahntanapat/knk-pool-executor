@@ -148,7 +148,8 @@ class _ProcessWorkItem(_WorkItem):
             result = fn(*arg, **kw)
             pipe.send([True, result])
         except Exception as e:
-            logger.exception("{e} from {fn}(*{arg},**{kw})", e=e, fn=fn, arg=arg, kw=kw)
+            logger.exception("{e} from {fn}(*{arg},**{kw})",
+                             e=e, fn=fn, arg=arg, kw=kw)
             pipe.send([False, e])
         return gc.collect()
 
@@ -177,14 +178,12 @@ class AWSLambdaMultiPoolExecutor(ThreadPoolExecutor):
                 raise BrokenThreadPool(self._broken)
 
             if self._shutdown:
-                raise RuntimeError("cannot schedule new futures after shutdown")
-            if _shutdown:
                 raise RuntimeError(
-                    "cannot schedule new futures after " "interpreter shutdown"
-                )
+                    "cannot schedule new futures after shutdown")
 
             f = AWSMultiPoolFuture()
-            w = _ProcessWorkItem(f, fn, self.logger, args, kwargs, self.mp_method)
+            w = _ProcessWorkItem(f, fn, self.logger, args,
+                                 kwargs, self.mp_method)
 
             self._work_queue.put(w)
             self._adjust_thread_count()
@@ -194,7 +193,8 @@ class AWSLambdaMultiPoolExecutor(ThreadPoolExecutor):
 class Pool:
     def __init__(
         self,
-        process_pool: Union[None, bool, ThreadPoolExecutor, ProcessPoolExecutor] = None,
+        process_pool: Union[None, bool, ThreadPoolExecutor,
+                            ProcessPoolExecutor] = None,
         pool_worker: Optional[int] = None,
         aws_lambda: Optional[bool] = None,
     ) -> None:
@@ -216,11 +216,14 @@ class Pool:
 
                 try:
                     if aws_lambda:
-                        self.pool = AWSLambdaMultiPoolExecutor(max_worker=pool_worker)
+                        self.pool = AWSLambdaMultiPoolExecutor(
+                            max_worker=pool_worker)
                     else:
-                        self.pool = ProcessPoolExecutor(max_workers=pool_worker)
+                        self.pool = ProcessPoolExecutor(
+                            max_workers=pool_worker)
                 except OSError:
-                    self.pool = AWSLambdaMultiPoolExecutor(max_worker=pool_worker)
+                    self.pool = AWSLambdaMultiPoolExecutor(
+                        max_worker=pool_worker)
             else:
                 if (pool_worker is None) or (pool_worker == 0):
                     pool_worker = min(1 + (cpu * 4), 61)
@@ -259,52 +262,3 @@ class Pool:
             futures.futures.append(self.pool.submit(fn, i))
 
         return futures
-
-
-def orchastrator(
-    fn_pool: Iterable[Tuple[Callable, Union[Pool, Executor]]],
-    logger: Logger,
-    break_if_None: bool = True,
-    series_compute: int = 1,
-):
-    assert len(fn_pool) > 0, "fn_pool should contain at least one step"
-    # build orchastrator function
-
-    ## Build series compute
-    if series_compute <= 0:
-
-        def series(x):
-            return x
-
-    elif break_if_None:
-
-        def series(xs):
-            ys = []
-            for x in xs:
-                y = fn_pool[0][0](x)
-
-                for fn in fn_pool[1:]:
-                    if y is None:
-                        break
-                    y = fn[0](y)
-                ys.append(y)
-            return ys
-
-    else:
-
-        def series(xs):
-            ys = []
-            for x in xs:
-                y = fn_pool[0][0](x)
-
-                for fn in fn_pool[1:]:
-                    y = fn[0](y)
-                ys.append(y)
-            return ys
-
-    ## Build parallel compute
-
-    if break_if_None:
-
-        def done_callback(x):
-            pass
