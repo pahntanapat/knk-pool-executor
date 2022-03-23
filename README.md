@@ -3,7 +3,7 @@ Kanokkul's AWS Lambda-Compatible process and thread pool executor
 
 ## Installation
 ```sh
-pip install knk-pool-executor
+pip install KnKPoolExecutor
 ```
 
 ## Usage
