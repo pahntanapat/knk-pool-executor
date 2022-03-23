@@ -20,34 +20,9 @@ import gc
 from logging import Logger, getLogger
 from multiprocessing import Pipe, freeze_support, get_context, cpu_count
 from multiprocessing.connection import Connection
-from typing import Any, Callable, Iterable, List, Mapping, Optional, Tuple, Union
+from typing import _T, Any, Callable, Iterable, Iterator, List, Mapping, Optional, Tuple, Union
 
 gc.enable()
-
-
-class MapFuture:
-    futures: List[Future]
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.futures = []
-
-    def result(self, timeout: Union[float, None] = None) -> Iterable:
-        if len(self.futures) <= 0:
-            return []
-
-        return [i.result(timeout) for i in self.futures]
-
-    def done(self, agg: Callable[[Iterable], Any] = all) -> Any:
-        """gather done of Futures
-
-        Args:
-            agg (Callable[[Iterable], Any], optional): Aggregate function i.e. all, any, sum, list. Defaults to all.
-
-        Returns:
-            Any: Depend on agg function
-        """
-        return agg(i.done() for i in self.futures)
 
 
 class AWSMultiPoolFuture(Future):
@@ -253,24 +228,3 @@ class Pool:
 
     def submit(self, fn: Callable, *arg, **kw) -> Future:
         return self.pool.submit(fn, *arg, **kw)
-
-    def automap_async(self, fn: Callable, args_kw: Iterable):
-        futures = MapFuture()
-
-        for i in args_kw:
-            if isinstance(i, Mapping):
-                futures.futures.append(self.pool.submit(fn, **i))
-            elif isinstance(i, Iterable):
-                futures.futures.append(self.pool.submit(fn, *i))
-            else:
-                futures.futures.append(self.pool.submit(fn, i))
-
-        return futures
-
-    def map_async(self, fn: Callable, args_kw: Iterable):
-        futures = MapFuture()
-
-        for i in args_kw:
-            futures.futures.append(self.pool.submit(fn, i))
-
-        return futures
