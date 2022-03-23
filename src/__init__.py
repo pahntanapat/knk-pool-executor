@@ -117,15 +117,18 @@ class _ProcessWorkItem(_WorkItem):
                     self.future.set_result(result)
                 else:
                     self.future.set_exception(result)
+
+                main.close()
             elif self.future.cancelled():
                 if proc.is_alive():
                     proc.terminate()
-                    self.logger.info(
-                        "The {mp} process of {fn} (pid: {pid}) ended with SIGTERM.",
-                        mp=self.mp_method,
-                        fn=self.fn.__name__,
-                        pid=proc.pid,
-                    )
+                    status = "The {mp} process of {fn} (pid: {pid}) ended by future.cancel() with exitcode: {exitcode}."
+                    kws = dict(mp=self.mp_method,
+                               fn=self.fn.__name__,
+                               pid=proc.pid, exitcode=proc.exitcode())
+
+                    self.logger.info(status, **kws)
+                    raise CancelledError(status.format_map(kws))
                 raise CancelledError()
             else:
                 raise RuntimeError(
@@ -154,6 +157,8 @@ class _ProcessWorkItem(_WorkItem):
             logger.exception("{e} from {fn}(*{arg},**{kw})",
                              e=e, fn=fn, arg=arg, kw=kw)
             pipe.send([False, e])
+
+        pipe.close()
         return gc.collect()
 
 
