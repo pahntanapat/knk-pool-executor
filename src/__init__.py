@@ -137,7 +137,7 @@ class _ProcessWorkItem(_WorkItem):
         return gc.collect()
 
 
-class AWSLambdaMultiPoolExecutor(ThreadPoolExecutor):
+class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
     def __init__(
         self,
         max_workers: Union[int, None] = None,
@@ -203,13 +203,13 @@ class Pool:
 
                 try:
                     if aws_lambda:
-                        self.pool = AWSLambdaMultiPoolExecutor(
+                        self.pool = AWSLambdaProcessPoolExecutor(
                             max_worker=pool_worker)
                     else:
                         self.pool = ProcessPoolExecutor(
                             max_workers=pool_worker)
                 except OSError:
-                    self.pool = AWSLambdaMultiPoolExecutor(
+                    self.pool = AWSLambdaProcessPoolExecutor(
                         max_worker=pool_worker)
             else:
                 if (pool_worker is None) or (pool_worker == 0):
