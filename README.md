@@ -1,2 +1,2 @@
-# knk-pool-executor
-Kanokkul's process and thread pool executor
+# Kanokkul's Pool Executor
+Kanokkul's AWS Lambda-Compatible process and thread pool executor
