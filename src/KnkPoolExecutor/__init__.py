@@ -147,6 +147,7 @@ class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
         initargs: Optional[Tuple[Any, ...]] = None,
         logger: Optional[Logger] = None,
         mp_method: Optional[str] = None,
+        thread_sleep: Optional[float] = None
     ) -> None:
 
         if max_workers is None:
@@ -155,6 +156,7 @@ class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
         super().__init__(max_workers, thread_name_prefix, initializer, initargs)
         self.logger = getLogger() if (logger is None) else logger
         self.mp_method = mp_method
+        self.thread_sleep = thread_sleep
 
     def submit(self, fn: Callable, *args, **kwargs) -> Future:
         with self._shutdown_lock:
@@ -170,8 +172,8 @@ class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
                 )
 
             f = AWSPoolFuture()
-            w = _ProcessWorkItem(f, fn, self.logger, args,
-                                 kwargs, self.mp_method)
+            w = _ProcessWorkItem(f, fn, self.logger, args, kwargs,
+                                 mp_method=self.mp_method, thread_sleep=self.thread_sleep)
 
             self._work_queue.put(w)
             self._adjust_thread_count()
