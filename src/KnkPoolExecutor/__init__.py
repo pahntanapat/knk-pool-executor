@@ -121,7 +121,7 @@ class _ProcessWorkItem(_WorkItem):
         self,
         future: AWSPoolFuture,
         fn: Callable,
-        logger: Logger,
+        # logger: Logger,
         args,
         kwargs,
         mp_method: Optional[str] = None,
@@ -131,7 +131,7 @@ class _ProcessWorkItem(_WorkItem):
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
-        self.logger = logger
+        #self.logger = logger
         self.mp_method = mp_method
 
         if (thread_sleep) and (thread_sleep > 0):
@@ -145,7 +145,7 @@ class _ProcessWorkItem(_WorkItem):
             main, sub = Pipe()
             proc = get_context(self.mp_method).Process(
                 target=self.process_worker,
-                args=[self.fn, sub, self.logger] + list(self.args),
+                args=[self.fn, sub] + list(self.args),
                 kwargs=self.kwargs,
             )
             proc.start()
@@ -170,7 +170,7 @@ class _ProcessWorkItem(_WorkItem):
                                fn=self.fn.__name__,
                                pid=proc.pid, exitcode=proc.exitcode())
 
-                    self.logger.info(status, **kws)
+                    #self.logger.info(status, **kws)
                     raise CancelledError(status.format_map(kws))
                 raise CancelledError()
             else:
@@ -185,20 +185,19 @@ class _ProcessWorkItem(_WorkItem):
                     )
                 )
 
-        except BaseException as exc:
-            self.logger.exception('Exception from run process: {}', exc)
-            self.future.set_exception(exc)
+        except:
+            # self.logger.exception('Exception from run process: {}', exc)
+            self.future.set_exception(
+                sys.exc_info()[0](traceback.format_exc()))
             # Break a reference cycle with the exception 'exc'
             self = None
 
     @staticmethod
-    def process_worker(fn: Callable, pipe: Connection, logger: Logger, /, *arg, **kw):
+    def process_worker(fn: Callable, pipe: Connection, /, *arg, **kw):
         try:
             result = fn(*arg, **kw)
             pipe.send([True, result])
-        except Exception as e:
-            logger.exception("{e} from {fn}(*{arg},**{kw})",
-                             e=e, fn=fn, arg=arg, kw=kw)
+        except:
             pipe.send([False, sys.exc_info()[0](traceback.format_exc())])
 
         pipe.close()
@@ -212,7 +211,7 @@ class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
         thread_name_prefix: Optional[str] = None,
         initializer: Optional[Callable[..., None]] = None,
         initargs: Optional[Tuple[Any, ...]] = None,
-        logger: Optional[Logger] = None,
+        # logger: Optional[Logger] = None,
         mp_method: Optional[str] = None,
         thread_sleep: Optional[float] = None
     ) -> None:
@@ -221,7 +220,7 @@ class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
             max_workers = 1 + (cpu_count() * 2)
 
         super().__init__(max_workers, thread_name_prefix, initializer, initargs)
-        self.logger = getLogger() if (logger is None) else logger
+        # self.logger = getLogger() if (logger is None) else logger
         self.mp_method = mp_method
         self.thread_sleep = thread_sleep
 
@@ -239,8 +238,11 @@ class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
                 )
 
             f = AWSPoolFuture()
-            w = _ProcessWorkItem(f, fn, self.logger, args, kwargs,
-                                 mp_method=self.mp_method, thread_sleep=self.thread_sleep)
+            w = _ProcessWorkItem(f, fn,
+                                 # self.logger,
+                                 args, kwargs,
+                                 mp_method=self.mp_method,
+                                 thread_sleep=self.thread_sleep)
 
             self._work_queue.put(w)
             self._adjust_thread_count()
