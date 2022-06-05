@@ -1,5 +1,4 @@
-
-from math import exp
+from math import log
 import numpy as np
 from os import cpu_count
 from time import sleep, perf_counter
@@ -18,7 +17,13 @@ for loop in range(4*cpu_count()):
 # PipeProcessPoolExecutor sleep
 
 # Simulate parallel processing with GIL-released process
-np.exp(np.arange(100000))
+np.log(np.arange(100000))
 
 # Simulate parallel processing with GIL process
-[exp(i) for i in range(100000)]
+for i in range(100000):
+    log(i)
+
+# Series
+for loop in range(cpu_count()):
+    for i in range(100000):
+        log(i)
