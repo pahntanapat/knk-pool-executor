@@ -1,3 +1,7 @@
+"""
+
+We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
+"""
 __author__ = 'Tanapat Kahabodeekanokkul (pahntanapat@gmail.com)'
 
 from concurrent.futures import (
@@ -21,9 +25,72 @@ import gc
 from logging import Logger, getLogger
 from multiprocessing import Pipe, freeze_support, get_context, cpu_count
 from multiprocessing.connection import Connection
-from typing import Any, Callable, Optional, Tuple, Union
+import sys
+import traceback
+from typing import Any, Callable, Iterable, Iterator, Optional, Tuple, TypeVar, Union
 
 gc.enable()
+
+_T = TypeVar("_T")
+
+
+def function_wrapper(fn, *args, **kwargs):
+    """Wraps `fn` in order to preserve the traceback of any kind of
+    raised exception
+
+    """
+    try:
+        return fn(*args, **kwargs)
+    except Exception:
+        raise sys.exc_info()[0](traceback.format_exc())  # Creates an
+        # exception of the
+        # same type with the
+        # traceback as
+        # message
+
+
+class ThreadPoolExecutorStackTraced(ThreadPoolExecutor):
+
+    def submit(self, fn, *args, **kwargs):
+        """Submits the wrapped function instead of `fn`"""
+
+        return super().submit(function_wrapper, fn, *args, **kwargs)
+
+    def map_args(self,
+                 fn: Callable[..., _T],
+                 iterable: Iterable[Any],
+                 *args,
+                 timeout: Optional[float] = None,
+                 chunksize: Optional[int] = None) -> Iterator[_T]:
+        l = len(iterable)
+        iterables = [iterable] + [[i] * l for i in args]
+        return super().map(fn,
+                           *iterables,
+                           timeout=timeout,
+                           chunksize=chunksize)
+
+
+class ProcessPoolExecutorStackTraced(ProcessPoolExecutor):
+
+    def submit(self, fn, *args, **kwargs):
+        """Submits the wrapped function instead of `fn`"""
+
+        return super().submit(function_wrapper, fn, *args, **kwargs)
+
+    def map_args(self,
+                 fn: Callable[..., _T],
+                 iterable: Iterable[Any],
+                 *args,
+                 timeout: Optional[float] = None,
+                 chunksize: Optional[int] = None) -> Iterator[_T]:
+        l = len(iterable)
+        iterables = [iterable] + [[i] * l for i in args]
+        if (chunksize is not None) and (chunksize < 0):
+            chunksize = max(1, l // (10 * self._max_workers))
+        return super().map(fn,
+                           *iterables,
+                           timeout=timeout,
+                           chunksize=chunksize)
 
 
 class AWSPoolFuture(Future):
@@ -132,7 +199,7 @@ class _ProcessWorkItem(_WorkItem):
         except Exception as e:
             logger.exception("{e} from {fn}(*{arg},**{kw})",
                              e=e, fn=fn, arg=arg, kw=kw)
-            pipe.send([False, e])
+            pipe.send([False, sys.exc_info()[0](traceback.format_exc())])
 
         pipe.close()
         return gc.collect()
