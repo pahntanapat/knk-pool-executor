@@ -204,7 +204,18 @@ class _ProcessWorkItem(_WorkItem):
         return gc.collect()
 
 
-class AWSLambdaProcessPoolExecutor(ThreadPoolExecutor):
+class PipeProcessPoolExecutor(ThreadPoolExecutor):
+    """ProcessPoolExecutor for environment without /dev/shm
+    PipeProcessPoolExecutor enable multi-cpu parallel processing in Python as same as ProcessPoolExecutor in environment without /dev/shm (shared memory for processes) support, i.e. AWS Lambda.
+
+    Acknowlegdement
+    ---------------
+     - [Parallel Processing in Python with AWS Lambda, AWS Compute Blog](https://aws.amazon.com/th/blogs/compute/parallel-processing-in-python-with-aws-lambda/)
+     - [AWS Lambda Memory Vs CPU configuration](https://stackoverflow.com/a/66523153)
+
+
+    """
+
     def __init__(
         self,
         max_workers: Union[int, None] = None,
@@ -275,13 +286,13 @@ class Pool:
 
                 try:
                     if aws_lambda:
-                        self.pool = AWSLambdaProcessPoolExecutor(
+                        self.pool = PipeProcessPoolExecutor(
                             max_worker=pool_worker)
                     else:
                         self.pool = ProcessPoolExecutor(
                             max_workers=pool_worker)
                 except OSError:
-                    self.pool = AWSLambdaProcessPoolExecutor(
+                    self.pool = PipeProcessPoolExecutor(
                         max_worker=pool_worker)
             else:
                 if (pool_worker is None) or (pool_worker == 0):
