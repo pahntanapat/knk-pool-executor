@@ -50,7 +50,7 @@ tuple(log(i) for i in range(1,100000000))
 
 **สรุป**มี 48 scenarios
 
-### 4. เตรียมไฟล์อื่นๆ แล้ว Push ขึ้น [test.pypi.org]  
+### 4. เตรียมไฟล์อื่นๆ แล้ว Push ขึ้น [https://test.pypi.org]  
 - ใส่ชื่อตัวเองเป็น co-authors
 - ห้ามเอาขึ้น Production Package index
 - แก้ readme เอา package ของตัวเองใส่
