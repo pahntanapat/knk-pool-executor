@@ -18,7 +18,6 @@ from concurrent.futures.thread import (
 )
 
 import gc
-from logging import Logger, getLogger
 from multiprocessing import Pipe, freeze_support, get_context, cpu_count
 from multiprocessing.connection import Connection
 import sys
