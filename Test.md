@@ -1,12 +1,13 @@
-# Test (โจทย์)
+# Test (โจทย์)  
+ปกติจะเขียน Document เป็นภาษาอังกฤษ แต่เพื่อความเป็นกันเอง ขอลองเขียนเป็นภาษาไทย
 
-## อธิบาย
-
+## อธิบาย  
+Package ทำให้ `ThreadPoolExecutor` หรือ `ProcessPoolExecutor` แสดง Error ได้ง่ายขึ้น ซึ่งได้ code มาจาก [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)&apos;s [answer in StackOverflow](https://stackoverflow.com/a/24457608) แล้วต่อยอดเพิ่ม โดยเพิ่ม ส่วนที่ให้ใช้กับ environment ที่ไม่รองรับ Shared memory เช่น AWS Lambda - [How to emulate multiprocessing.Pool.map() in AWS Lambda?](https://stackoverflow.com/questions/56329799/how-to-emulate-multiprocessing-pool-map-in-aws-lambda) และ [Parallel Processing in Python with AWS Lambda: AWS Compute Blog](https://aws.amazon.com/th/blogs/compute/parallel-processing-in-python-with-aws-lambda/)
 
 ## ทำอะไรบ้าง
 
 ### 1. Fork Branch นี้ใน Github อันนี้ไปบน Git ตัวเอง
-- ตั้งเป็น Public หรือ Private git ก็ได้  ถ้าตั้งเป็น Private git
+- ตั้งเป็น Public หรือ Private git ก็ได้
 - ให้ invite `pahntanapat` เข้าไปเป็น collaborator ด้วย
 
 
