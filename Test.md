@@ -27,11 +27,11 @@ PipeProcessPoolExecutor
 
 ### Test Scenario
 1. `sleep()`
-2. GIL-released process: คิดให้แล้วว่าใช้ `numpy` ซึ่งทำงาน multi-cpu parallel ด้วยตัวมันเอง <br>
+2. GIL-released process: คิดให้แล้วว่าใช้ `numpy` ซึ่งทำงาน multi-cpu parallel ด้วยตัวมันเอง  
    ```python  
 np.log(np.arange(1,100000000))
    ```
-3. GIL process: python function ทั่วๆ ไป  คิดว่าน่าจะใช้ <br>
+3. GIL process: python function ทั่วๆ ไป  คิดว่าน่าจะใช้  
    ```python  
 tuple(log(i) for i in range(1,100000000))
 ```
