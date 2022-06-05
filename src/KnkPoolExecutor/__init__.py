@@ -49,7 +49,7 @@ def function_wrapper(fn, *args, **kwargs):
         # message
 
 
-class ThreadPoolExecutorStackTraced(ThreadPoolExecutor):
+class StackTracedThreadPoolExecutor(ThreadPoolExecutor):
 
     def submit(self, fn, *args, **kwargs):
         """Submits the wrapped function instead of `fn`"""
@@ -70,7 +70,7 @@ class ThreadPoolExecutorStackTraced(ThreadPoolExecutor):
                            chunksize=chunksize)
 
 
-class ProcessPoolExecutorStackTraced(ProcessPoolExecutor):
+class StackTracedProcessPoolExecutor(ProcessPoolExecutor):
 
     def submit(self, fn, *args, **kwargs):
         """Submits the wrapped function instead of `fn`"""
@@ -93,7 +93,7 @@ class ProcessPoolExecutorStackTraced(ProcessPoolExecutor):
                            chunksize=chunksize)
 
 
-class AWSPoolFuture(Future):
+class PipePoolFuture(Future):
     def cancel(self):
         """Cancel the future if possible.
 
@@ -119,11 +119,13 @@ class _ProcessWorkItem(_WorkItem):
 
     def __init__(
         self,
-        future: AWSPoolFuture,
+        future: PipePoolFuture,
         fn: Callable,
         # logger: Logger,
         args,
         kwargs,
+        initializer: Optional[Callable] = None,
+        initargs: Tuple[Any, ...] = tuple(),
         mp_method: Optional[str] = None,
         thread_sleep: Optional[float] = 0.001
     ):
@@ -133,6 +135,8 @@ class _ProcessWorkItem(_WorkItem):
         self.kwargs = kwargs
         #self.logger = logger
         self.mp_method = mp_method
+        self.initializer = initializer
+        self.initargs = initargs
 
         if (thread_sleep) and (thread_sleep > 0):
             self.THREAD_SLEEP = thread_sleep
@@ -146,6 +150,8 @@ class _ProcessWorkItem(_WorkItem):
             proc = get_context(self.mp_method).Process(
                 target=self.process_worker,
                 args=[self.fn, sub] + list(self.args),
+                initializer=self.initializer,
+                initargs=self.initargs,
                 kwargs=self.kwargs,
             )
             proc.start()
@@ -193,8 +199,10 @@ class _ProcessWorkItem(_WorkItem):
             self = None
 
     @staticmethod
-    def process_worker(fn: Callable, pipe: Connection, /, *arg, **kw):
+    def process_worker(pipe: Connection, fn: Callable, /, *arg, initializer: Optional[Callable] = None, initargs: Tuple[Any, ...] = tuple(), **kw):
         try:
+            if initializer is not None:
+                initializer(*initargs)
             result = fn(*arg, **kw)
             pipe.send([True, result])
         except:
@@ -248,10 +256,12 @@ class PipeProcessPoolExecutor(ThreadPoolExecutor):
                     "cannot schedule new futures after interpreter shutdown"
                 )
 
-            f = AWSPoolFuture()
+            f = PipePoolFuture()
             w = _ProcessWorkItem(f, fn,
                                  # self.logger,
                                  args, kwargs,
+                                 initializer=self._initializer,
+                                 initargs=self._initargs,
                                  mp_method=self.mp_method,
                                  thread_sleep=self.thread_sleep)
 
