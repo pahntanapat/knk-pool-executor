@@ -299,7 +299,7 @@ class Pool:
                         self.pool = PipeProcessPoolExecutor(
                             max_worker=pool_worker)
                     else:
-                        self.pool = ProcessPoolExecutor(
+                        self.pool = StackTracedProcessPoolExecutor(
                             max_workers=pool_worker)
                 except OSError:
                     self.pool = PipeProcessPoolExecutor(
@@ -310,7 +310,7 @@ class Pool:
                 elif pool_worker < 0:
                     pool_worker = min(max(1, (4 * cpu) + 1 - pool_worker), 61)
 
-                self.pool = ThreadPoolExecutor(max_workers=pool_worker)
+                self.pool = StackTracedThreadPoolExecutor(max_workers=pool_worker)
 
         else:
             self.pool = process_pool
