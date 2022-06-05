@@ -1,7 +1,3 @@
-"""
-
-We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
-"""
 __author__ = 'Tanapat Kahabodeekanokkul (pahntanapat@gmail.com)'
 
 from concurrent.futures import (
@@ -50,6 +46,10 @@ def function_wrapper(fn, *args, **kwargs):
 
 
 class StackTracedThreadPoolExecutor(ThreadPoolExecutor):
+    """
+
+    We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
+    """
 
     def submit(self, fn, *args, **kwargs):
         """Submits the wrapped function instead of `fn`"""
@@ -71,6 +71,10 @@ class StackTracedThreadPoolExecutor(ThreadPoolExecutor):
 
 
 class StackTracedProcessPoolExecutor(ProcessPoolExecutor):
+    """
+
+    We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
+    """
 
     def submit(self, fn, *args, **kwargs):
         """Submits the wrapped function instead of `fn`"""
@@ -310,7 +314,8 @@ class Pool:
                 elif pool_worker < 0:
                     pool_worker = min(max(1, (4 * cpu) + 1 - pool_worker), 61)
 
-                self.pool = StackTracedThreadPoolExecutor(max_workers=pool_worker)
+                self.pool = StackTracedThreadPoolExecutor(
+                    max_workers=pool_worker)
 
         else:
             self.pool = process_pool
