@@ -19,6 +19,9 @@ for loop in range(4*cpu_count()):
 # Simulate parallel processing with GIL-released process
 np.log(np.arange(100000))
 
+for loop in range(cpu_count()):
+    np.log(np.arange(100000))
+
 # Simulate parallel processing with GIL process
 for i in range(100000):
     log(i)
