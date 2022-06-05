@@ -28,11 +28,11 @@ PipeProcessPoolExecutor
 ### Test Scenario
 1. `sleep()`
 2. GIL-released process: คิดให้แล้วว่าใช้ `numpy` <br>ซึ่งทำงาน multi-cpu parallel ด้วยตัวมันเอง
-   ```python
+   ```python  
 np.log(np.arange(1,100000000))
    ```
 3. GIL process: python function ทั่วๆ ไป  คิดว่าน่าจะใช้ <br>
-   ```python
+   ```python  
 tuple(log(i) for i in range(1,100000000))
 ```
   
@@ -53,3 +53,8 @@ tuple(log(i) for i in range(1,100000000))
 ### 4. เตรียมไฟล์อื่นๆ แล้ว Push ขึ้น [test.pypi.org]  
 - ใส่ชื่อตัวเองเป็น co-authors
 - ห้ามเอาขึ้น Production Package index
+- แก้ readme เอา package ของตัวเองใส่
+- ส่ง package and github url มาพร้อมใบสมัคร
+
+## Disclaimer  
+ผมจะให้เครดิตผู้สมัครทุกท่านที่ทำแบบทดสอบ Github นี้ โดยใส่ชื่อใน Package
