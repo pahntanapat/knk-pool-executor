@@ -5,6 +5,7 @@ from os import cpu_count
 from time import sleep, perf_counter
 
 # Simulate parallel processing with sleep >> Capture time and compare
+sleep(1)
 # Series sleep
 for loop in range(cpu_count()):
     sleep(1)
