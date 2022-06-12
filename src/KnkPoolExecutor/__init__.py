@@ -136,10 +136,10 @@ class _ProcessWorkItem(_WorkItem):
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
+        self.kwargs['initializer'] = initializer
+        self.kwargs['initargs'] = initargs
         #self.logger = logger
         self.mp_method = mp_method
-        self.initializer = initializer
-        self.initargs = initargs
 
         if (thread_sleep) and (thread_sleep > 0):
             self.THREAD_SLEEP = thread_sleep
@@ -153,8 +153,6 @@ class _ProcessWorkItem(_WorkItem):
             proc = get_context(self.mp_method).Process(
                 target=self.process_worker,
                 args=[self.fn, sub] + list(self.args),
-                initializer=self.initializer,
-                initargs=self.initargs,
                 kwargs=self.kwargs,
             )
             proc.start()
@@ -202,7 +200,7 @@ class _ProcessWorkItem(_WorkItem):
             self = None
 
     @staticmethod
-    def process_worker(pipe: Connection, fn: Callable, /, *arg, initializer: Optional[Callable] = None, initargs: Tuple[Any, ...] = tuple(), **kw):
+    def process_worker(fn: Callable, pipe: Connection, /, *arg, initializer: Optional[Callable] = None, initargs: Tuple[Any, ...] = tuple(), **kw):
         try:
             if initializer is not None:
                 initializer(*initargs)
