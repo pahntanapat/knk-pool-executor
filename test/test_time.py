@@ -23,28 +23,33 @@ class CalibrateTime:
     t_sleep: float = 1
     t_np: float = 0
     t_gil: float = 0
-    LOOP = 10000000000
+    LOOP = 100000000
 
-    def __init__(self, loop: int = 10000000000) -> None:
+    def __init__(self, loop: int = 100000000) -> None:
         self.LOOP = loop
+        print('sleep')
         t1 = perf_counter()
         sleep(1)
         t2 = perf_counter()
         self.t_sleep = t2-t1
 
+        print('NumPy')
         t1 = perf_counter()
         self.np()
         t2 = perf_counter()
         self.t_np = t2-t1
 
+        print('GIL math')
         t1 = perf_counter()
         self.gil()
         t2 = perf_counter()
         self.t_gil = t2-t1
+        print('sleep: 1', 'used time:', self.t_sleep,
+              'np:', self.t_np, 'GIL:', self.t_gil)
 
     @classmethod
     def np(cls, *a):
-        np.sum(np.log(1+np.arange(cls.LOOP)))
+        np.sum(np.log(1+np.arange(cls.LOOP, dtype=float)))
 
     @classmethod
     def gil(cls, *a):
@@ -115,7 +120,7 @@ class TestPoolTime(TestCase):
         t2 = perf_counter()
 
         self.assertLessEqual(
-            self.print_result(t2-t1, self.calibrate_time.t_sleep), self.test_round, 'Jobs (NumPy) not done in parallel ({}).'.format(self.pool_class.__name__))
+            self.print_result(t2-t1, self.calibrate_time.t_np), self.test_round, 'Jobs (NumPy) not done in parallel ({}).'.format(self.pool_class.__name__))
 
     def test_gil(self):
         arg = [None] * self.test_loop
@@ -125,7 +130,7 @@ class TestPoolTime(TestCase):
 
         if not isinstance(self.pool, ThreadPoolExecutor):
             self.assertLessEqual(
-                self.print_result(t2-t1, self.calibrate_time.t_sleep), self.test_round, 'Jobs (GIL math) not done in parallel ({}).'.format(self.pool_class.__name__))
+                self.print_result(t2-t1, self.calibrate_time.t_gil), self.test_round, 'Jobs (GIL math) not done in parallel ({}).'.format(self.pool_class.__name__))
 
 
 if __name__ == '__main__':
@@ -133,8 +138,6 @@ if __name__ == '__main__':
 
     print('Baseline')
     calibrate = CalibrateTime()
-    print('sleep: 1', 'used time:', calibrate.t_sleep,
-          'np:', calibrate.t_np, 'GIL:', calibrate.gil)
 
     cpu = cpu_count()
     suite = TestSuite()
