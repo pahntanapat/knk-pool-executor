@@ -2,6 +2,7 @@ __author__ = 'Tanapat Kahabodeekanokkul (pahntanapat@gmail.com)'
 
 from concurrent.futures import (
     CancelledError,
+    Executor,
     ThreadPoolExecutor,
     ProcessPoolExecutor,
     Future,
@@ -21,6 +22,7 @@ import gc
 from multiprocessing import Pipe, freeze_support, get_context, cpu_count
 from multiprocessing.connection import Connection
 import sys
+import time
 import traceback
 from typing import Any, Callable, Iterable, Iterator, Optional, Tuple, TypeVar, Union
 
@@ -44,7 +46,8 @@ def function_wrapper(fn, *args, **kwargs):
         # message
 
 
-class StackTracedThreadPoolExecutor(ThreadPoolExecutor):
+class StackTraceExecutor(Executor):
+
     """
 
     We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
@@ -68,8 +71,58 @@ class StackTracedThreadPoolExecutor(ThreadPoolExecutor):
                            timeout=timeout,
                            chunksize=chunksize)
 
+    def map(self, fn, *iterables, timeout=None, chunksize=1):
+        """Returns an iterator equivalent to map(fn, iter).
 
-class StackTracedProcessPoolExecutor(ProcessPoolExecutor):
+        Args:
+            fn: A callable that will take as many arguments as there are
+                passed iterables.
+            timeout: The maximum number of seconds to wait. If None, then there
+                is no limit on the wait time.
+            chunksize: The size of the chunks the iterable will be broken into
+                before being passed to a child process. This argument is only
+                used by ProcessPoolExecutor; it is ignored by
+                ThreadPoolExecutor.
+
+        Returns:
+            An iterator equivalent to: map(func, *iterables) but the calls may
+            be evaluated out-of-order.
+
+        Raises:
+            TimeoutError: If the entire result iterator could not be generated
+                before the given timeout.
+            Exception: If fn(*args) raises for any values.
+        """
+        if timeout is not None:
+            end_time = timeout + time.monotonic()
+
+        fs = [self.submit(fn, *args) for args in zip(*iterables)]
+
+        # Yield must be hidden in closure so that the futures are submitted
+        # before the first iterator value is required.
+        def result_iterator():
+            try:
+                # reverse to keep finishing order
+                fs.reverse()
+                while fs:
+                    # Careful not to keep a reference to the popped future
+                    if timeout is None:
+                        yield fs.pop().result()
+                    else:
+                        yield fs.pop().result(end_time - time.monotonic())
+            except Exception:
+                raise sys.exc_info()[0](traceback.format_exc())
+            finally:
+                for future in fs:
+                    future.cancel()
+        return result_iterator()
+
+
+class StackTracedThreadPoolExecutor(StackTraceExecutor, ThreadPoolExecutor):
+    pass
+
+
+class StackTracedProcessPoolExecutor(StackTraceExecutor, ProcessPoolExecutor):
     """
 
     We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
@@ -213,7 +266,7 @@ class _ProcessWorkItem(_WorkItem):
         return gc.collect()
 
 
-class PipeProcessPoolExecutor(ThreadPoolExecutor):
+class PipeProcessPoolExecutor(StackTracedThreadPoolExecutor):
     """ProcessPoolExecutor for environment without /dev/shm
     PipeProcessPoolExecutor enable multi-cpu parallel processing in Python as same as ProcessPoolExecutor in environment without /dev/shm (shared memory for processes) support, i.e. AWS Lambda.
 
