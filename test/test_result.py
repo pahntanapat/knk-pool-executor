@@ -14,7 +14,6 @@ except:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
     from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
 
-
 class TestPoolResult(TestCase):
     def __init__(self, methodName: str, pool: Union[Type[ThreadPoolExecutor], Type[ProcessPoolExecutor]], pool_size: int = cpu_count()) -> None:
         freeze_support()

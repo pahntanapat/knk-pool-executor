@@ -96,7 +96,7 @@ class TestPoolTime(TestCase):
               (t-self.overhead)/self.test_loop,'\tEst. overhead:', t-(calibrate*self.test_loop))
 
         self.assertGreaterEqual(
-            t, calibrate,'\tJobs duration is shorter than duration of single jobs in main thread.')
+            t, calibrate, 'Jobs duration is shorter than duration of single jobs in main thread.')
         t = (t-self.overhead)/calibrate
         self.assertLessEqual(
             t, self.test_loop, 'Jobs duration is longer than running in main thread.')
