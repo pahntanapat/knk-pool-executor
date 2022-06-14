@@ -125,7 +125,7 @@ class TestPoolTime(TestCase):
     def test_gil(self):
         arg = [None] * self.test_loop
         t1 = perf_counter()
-        list(self.pool.map(sleep, arg))
+        list(self.pool.map(CalibrateTime.gil, arg))
         t2 = perf_counter()
 
         if not isinstance(self.pool, ThreadPoolExecutor):
