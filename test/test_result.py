@@ -1,12 +1,12 @@
 
 from multiprocessing import cpu_count, freeze_support
 from typing import Type, Union
-from KnkPoolExecutor import PipeProcessPoolExecutor
+from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
 from concurrent.futures import ALL_COMPLETED, Executor, ProcessPoolExecutor, ThreadPoolExecutor, wait
 from time import sleep
 import sys
 import os
-from unittest import TestCase
+from unittest import TestCase, TestSuite, TextTestRunner
 
 # Add src dir to import path for debugging
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -39,14 +39,19 @@ class TestPoolResult(TestCase):
             self.assertIsNone(
                 v, 'pool.map(sleep, [1]*pool_size) at index: '+str(k))
 
-    def test_map_sleep(self):
-        for k, v in enumerate(self.pool.map(sleep, [1]*self.pool_size)):
+    def test_submit_sleep(self):
+        ft = [self.pool.submit(sleep, 1) for _ in range(self.pool_size)]
+        wait(ft, return_when=ALL_COMPLETED)
+        for k, v in enumerate(ft):
             self.assertIsNone(
-                v, 'pool.map(sleep, [1]*pool_size) at index: '+str(k))
+                v.exception(), 'self.pool.submit(sleep, 1) raises exception at index: '+str(k))
+            if v.exception() is None:
+                self.assertIsNone(
+                    v.result(), 'pool.map(sleep, [1]*pool_size) at index: '+str(k))
+
 
 if __name__ == '__main__':
-    with PipeProcessPoolExecutor() as pool:
-        r = [pool.submit(sleep, 1) for _ in range(10)]
-        wait(r, return_when=ALL_COMPLETED)
-        for i in r:
-            print(i.result())
+    TextTestRunner().run(TestSuite([TestPoolResult(ProcessPoolExecutor), TestPoolResult(ThreadPoolExecutor),
+                                    TestPoolResult(StackTracedProcessPoolExecutor), TestPoolResult(
+        StackTracedThreadPoolExecutor), TestPoolResult(PipeProcessPoolExecutor)
+    ]))
