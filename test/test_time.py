@@ -2,7 +2,7 @@ from concurrent.futures import ALL_COMPLETED, ProcessPoolExecutor, ThreadPoolExe
 from multiprocessing import cpu_count, freeze_support
 from time import sleep, perf_counter
 import time
-from math import log
+from math import ceil, log
 from typing import Dict, Type, Union
 import numpy as np
 
@@ -64,7 +64,7 @@ class TestPoolTime(TestCase):
         self.worker = pool_worker
 
         self.test_loop = test_loop
-        self.test_round = round(test_loop/pool_worker)
+        self.test_round = ceil(test_loop/pool_worker)
         self.calibrate_time = CalibrateTime() if calibrate_time is None else calibrate_time
         self.overhead = overhead_time
         super().__init__(methodName)
