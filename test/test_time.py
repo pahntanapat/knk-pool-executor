@@ -100,7 +100,7 @@ class TestPoolTime(TestCase):
         t = (t-self.overhead)/calibrate
         self.assertLessEqual(
             t, self.test_loop, 'Jobs duration is longer than running in main thread.')
-        return (t-self.overhead)/self.test_round
+        return (t-self.overhead)/self.test_loop
 
     def test_sleep(self):
         arg = [1] * self.test_loop
