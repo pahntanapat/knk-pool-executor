@@ -141,9 +141,9 @@ if __name__ == '__main__':
 
     cpu = cpu_count()
     suite = TestSuite()
-    for p in [ProcessPoolExecutor, ThreadPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor, PipeProcessPoolExecutor]:
-        for t in ['test_sleep', 'test_np', 'test_gil']:
-            for m, a in [[0, 1], [0, cpu//2], [1, 0], [1, 1], [1, cpu//2], [2, 0]]:
+    for t in ['test_sleep', 'test_np', 'test_gil']:
+        for m, a in [[0, 1], [0, cpu//2], [1, 0], [1, 1], [1, cpu//2], [2, 0]]:
+            for p in [ProcessPoolExecutor, ThreadPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor, PipeProcessPoolExecutor]:
                 suite.addTest(
                     TestPoolTime(methodName=t, pool=p, test_loop=(
                         cpu*m)+a, calibrate_time=calibrate))
