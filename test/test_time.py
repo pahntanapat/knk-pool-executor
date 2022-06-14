@@ -44,8 +44,8 @@ class CalibrateTime:
         self.gil()
         t2 = perf_counter()
         self.t_gil = t2-t1
-        print('sleep: 1', 'used time:', self.t_sleep,
-              'np:', self.t_np, 'GIL:', self.t_gil)
+        print('sleep: 1','\tused time:', self.t_sleep,
+              'np:', self.t_np,'\tGIL:', self.t_gil)
 
     @classmethod
     def np(cls, *a):
@@ -83,20 +83,20 @@ class TestPoolTime(TestCase):
         if func is None:
             func = self._testMethodName
         print('*'*20)
-        print('Func:', func, 'Pool:', self.pool_class.__name__, 'Worker:',
-              self.worker, 'TestLoop:', self.test_loop, 'WorkerRound:', self.test_round, 'Overhead:', self.overhead)
+        print('Func:', func,'\tPool:', self.pool_class.__name__,'\tWorker:',
+              self.worker,'\tTestLoop:', self.test_loop,'\tWorkerRound:', self.test_round,'\tOverhead:', self.overhead)
         print('Calibrate time:', calibrate,
               'Calibrate * Round:', calibrate * self.test_round)
         print('Used time:', t)
-        print('Per worker:', t/self.worker, 'Per worker - set overhead:',
-              (t-self.overhead)/self.worker, 'Est. overhead:', t-(calibrate*self.worker))
-        print('Per worker round:', t/self.test_round, 'Per worker round - set overhead:',
-              (t-self.overhead)/self.test_round, 'Est. overhead:', t-(calibrate*self.test_round))
-        print('Per jobs:', t/self.test_loop, 'Per jobs - set overhead:',
-              (t-self.overhead)/self.test_loop, 'Est. overhead:', t-(calibrate*self.test_loop))
+        print('Per worker:', t/self.worker,'\tPer worker - set overhead:',
+              (t-self.overhead)/self.worker,'\tEst. overhead:', t-(calibrate*self.worker))
+        print('Per worker round:', t/self.test_round,'\tPer worker round - set overhead:',
+              (t-self.overhead)/self.test_round,'\tEst. overhead:', t-(calibrate*self.test_round))
+        print('Per jobs:', t/self.test_loop,'\tPer jobs - set overhead:',
+              (t-self.overhead)/self.test_loop,'\tEst. overhead:', t-(calibrate*self.test_loop))
 
         self.assertGreaterEqual(
-            t, calibrate, 'Jobs duration is shorter than duration of single jobs in main thread.')
+            t, calibrate,'\tJobs duration is shorter than duration of single jobs in main thread.')
         t = (t-self.overhead)/calibrate
         self.assertLessEqual(
             t, self.test_loop, 'Jobs duration is longer than running in main thread.')
