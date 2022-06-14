@@ -1,28 +1,27 @@
-
 from multiprocessing import cpu_count, freeze_support
 from typing import Type, Union
-from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
-from concurrent.futures import ALL_COMPLETED, Executor, ProcessPoolExecutor, ThreadPoolExecutor, wait
+
+from concurrent.futures import ALL_COMPLETED, ProcessPoolExecutor, ThreadPoolExecutor, wait
 from time import sleep
-import sys
-import os
 from unittest import TestCase, TestSuite, TextTestRunner
 
-# Add src dir to import path for debugging
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+try:
+    from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
+except:
+    import sys
+    import os
+    # Add src dir to import path for debugging
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+    from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
 
 
 class TestPoolResult(TestCase):
-    def __init__(self, pool: Union[Type[ThreadPoolExecutor], Type[ProcessPoolExecutor]], pool_size: int = cpu_count(), methodName: str = None) -> None:
+    def __init__(self, methodName: str, pool: Union[Type[ThreadPoolExecutor], Type[ProcessPoolExecutor]], pool_size: int = cpu_count()) -> None:
         freeze_support()
         self.pool = None
         self.pool_class = pool
         self.pool_size = pool_size
-        if methodName is None:
-            super().__init__('{}:{}({})'.format(
-                self.__class__.__name__, self.pool.__class__.__name__, pool_size))
-        else:
-            super().__init__(methodName)
+        super().__init__(methodName)
 
     def setUp(self) -> None:
         self.pool = self.pool_class(self.pool_size)
@@ -30,7 +29,7 @@ class TestPoolResult(TestCase):
 
     def tearDown(self) -> None:
         if self.pool is not None:
-            self.pool.shutdown(wait=False)
+            self.pool.shutdown(wait=True)
             self.pool = None
         return super().tearDown()
 
@@ -51,7 +50,8 @@ class TestPoolResult(TestCase):
 
 
 if __name__ == '__main__':
-    TextTestRunner().run(TestSuite([TestPoolResult(ProcessPoolExecutor), TestPoolResult(ThreadPoolExecutor),
-                                    TestPoolResult(StackTracedProcessPoolExecutor), TestPoolResult(
-        StackTracedThreadPoolExecutor), TestPoolResult(PipeProcessPoolExecutor)
-    ]))
+    suite = TestSuite()
+    for i in {'test_map_sleep', 'test_submit_sleep'}:
+        for p in {ProcessPoolExecutor, ThreadPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor, PipeProcessPoolExecutor}:
+            suite.addTest(TestPoolResult(i, p))
+    TextTestRunner().run(suite)
