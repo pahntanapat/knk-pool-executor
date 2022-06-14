@@ -49,11 +49,11 @@ class CalibrateTime:
 
     @classmethod
     def np(cls, *a):
-        np.sum(np.log(1+np.arange(cls.LOOP, dtype=float)))
+        return np.sum(np.log(1+np.arange(cls.LOOP, dtype=float)))
 
     @classmethod
     def gil(cls, *a):
-        sum(log(i+1) for i in range(cls.LOOP))
+        return sum(log(i+1) for i in range(cls.LOOP))
 
 
 class TestPoolTime(TestCase):
@@ -100,7 +100,7 @@ class TestPoolTime(TestCase):
         t = (t-self.overhead)/calibrate
         self.assertLessEqual(
             t, self.test_loop, 'Jobs duration is longer than running in main thread.')
-        return t
+        return (t-self.overhead)/self.test_round
 
     def test_sleep(self):
         arg = [1] * self.test_loop
