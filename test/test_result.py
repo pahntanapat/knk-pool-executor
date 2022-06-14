@@ -1,3 +1,15 @@
+try:
+    from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
+except:
+    import sys
+    import os
+    # Add src dir to import path for debugging
+    sys.path.insert(0, os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'src')))
+    print('Unable to import, use src instead', sys.path)
+
+    from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
+
 from multiprocessing import cpu_count, freeze_support
 from typing import Type, Union
 
@@ -5,14 +17,6 @@ from concurrent.futures import ALL_COMPLETED, ProcessPoolExecutor, ThreadPoolExe
 from time import sleep
 from unittest import TestCase, TestSuite, TextTestRunner
 
-try:
-    from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
-except:
-    import sys
-    import os
-    # Add src dir to import path for debugging
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-    from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
 
 class TestPoolResult(TestCase):
     def __init__(self, methodName: str, pool: Union[Type[ThreadPoolExecutor], Type[ProcessPoolExecutor]], pool_size: int = cpu_count()) -> None:

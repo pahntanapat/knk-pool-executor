@@ -15,7 +15,10 @@ except:
     import sys
     import os
     # Add src dir to import path for debugging
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+    sys.path.insert(0, os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'src')))
+    print('Unable to import, use src instead', sys.path)
+
     from KnkPoolExecutor import PipeProcessPoolExecutor, StackTracedProcessPoolExecutor, StackTracedThreadPoolExecutor
 
 
@@ -44,8 +47,8 @@ class CalibrateTime:
         self.gil()
         t2 = perf_counter()
         self.t_gil = t2-t1
-        print('sleep: 1','\tused time:', self.t_sleep,
-              'np:', self.t_np,'\tGIL:', self.t_gil)
+        print('sleep: 1', '\tused time:', self.t_sleep,
+              'np:', self.t_np, '\tGIL:', self.t_gil)
 
     @classmethod
     def np(cls, *a):
@@ -83,17 +86,17 @@ class TestPoolTime(TestCase):
         if func is None:
             func = self._testMethodName
         print('*'*20)
-        print('Func:', func,'\tPool:', self.pool_class.__name__,'\tWorker:',
-              self.worker,'\tTestLoop:', self.test_loop,'\tWorkerRound:', self.test_round,'\tOverhead:', self.overhead)
+        print('Func:', func, '\tPool:', self.pool_class.__name__, '\tWorker:',
+              self.worker, '\tTestLoop:', self.test_loop, '\tWorkerRound:', self.test_round, '\tOverhead:', self.overhead)
         print('Calibrate time:', calibrate,
               'Calibrate * Round:', calibrate * self.test_round)
         print('Used time:', t)
-        print('Per worker:', t/self.worker,'\tPer worker - set overhead:',
-              (t-self.overhead)/self.worker,'\tEst. overhead:', t-(calibrate*self.worker))
-        print('Per worker round:', t/self.test_round,'\tPer worker round - set overhead:',
-              (t-self.overhead)/self.test_round,'\tEst. overhead:', t-(calibrate*self.test_round))
-        print('Per jobs:', t/self.test_loop,'\tPer jobs - set overhead:',
-              (t-self.overhead)/self.test_loop,'\tEst. overhead:', t-(calibrate*self.test_loop))
+        print('Per worker:', t/self.worker, '\tPer worker - set overhead:',
+              (t-self.overhead)/self.worker, '\tEst. overhead:', t-(calibrate*self.worker))
+        print('Per worker round:', t/self.test_round, '\tPer worker round - set overhead:',
+              (t-self.overhead)/self.test_round, '\tEst. overhead:', t-(calibrate*self.test_round))
+        print('Per jobs:', t/self.test_loop, '\tPer jobs - set overhead:',
+              (t-self.overhead)/self.test_loop, '\tEst. overhead:', t-(calibrate*self.test_loop))
 
         self.assertGreaterEqual(
             t, calibrate, 'Jobs duration is shorter than duration of single jobs in main thread.')
