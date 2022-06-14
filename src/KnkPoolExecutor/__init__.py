@@ -1,4 +1,4 @@
-__author__ = 'Tanapat Kahabodeekanokkul (pahntanapat@gmail.com)'
+__author__ = 'Tanapat Kahabodeekanokkul (GitHub @pahntanapat, pahntanapat@gmail.com), Natthaphong Ratchakhom (GitHub @natthaphong17)'
 
 from concurrent.futures import (
     CancelledError,
@@ -48,7 +48,7 @@ def function_wrapper(fn, *args, **kwargs):
 
 class StackTraceExecutor(Executor):
 
-    """
+    """Base class for Executor, attaching stack trace when execption occurs.
 
     We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
     """
@@ -71,7 +71,7 @@ class StackTraceExecutor(Executor):
                            timeout=timeout,
                            chunksize=chunksize)
 
-    def map(self, fn, *iterables, timeout=None, chunksize=1):
+    def map(self, fn: Callable[..., _T], *iterables, timeout: Optional[float] = None, chunksize: int = 1) -> Iterator[_T]:
         """Returns an iterator equivalent to map(fn, iter).
 
         Args:
@@ -123,30 +123,7 @@ class StackTracedThreadPoolExecutor(StackTraceExecutor, ThreadPoolExecutor):
 
 
 class StackTracedProcessPoolExecutor(StackTraceExecutor, ProcessPoolExecutor):
-    """
-
-    We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
-    """
-
-    def submit(self, fn, *args, **kwargs):
-        """Submits the wrapped function instead of `fn`"""
-
-        return super().submit(function_wrapper, fn, *args, **kwargs)
-
-    def map_args(self,
-                 fn: Callable[..., _T],
-                 iterable: Iterable[Any],
-                 *args,
-                 timeout: Optional[float] = None,
-                 chunksize: Optional[int] = None) -> Iterator[_T]:
-        l = len(iterable)
-        iterables = [iterable] + [[i] * l for i in args]
-        if (chunksize is not None) and (chunksize < 0):
-            chunksize = max(1, l // (10 * self._max_workers))
-        return super().map(fn,
-                           *iterables,
-                           timeout=timeout,
-                           chunksize=chunksize)
+    pass
 
 
 class PipePoolFuture(Future):
