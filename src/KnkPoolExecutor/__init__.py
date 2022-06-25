@@ -21,6 +21,7 @@ from concurrent.futures.thread import (
 import gc
 from multiprocessing import Pipe, freeze_support, get_context, cpu_count
 from multiprocessing.connection import Connection
+from queue import Queue
 import sys
 import time
 import traceback
@@ -50,7 +51,7 @@ class StackTraceExecutor(Executor):
 
     """Base class for Executor, attaching stack trace when execption occurs.
 
-    We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608).
+    We acknowledge [se7entyse7en](https://stackoverflow.com/users/3276106/se7entyse7en)'s [answer in StackOverflow](https://stackoverflow.com/a/24457608) about Stack Traces and [bounded-pool-executor](https://pypi.org/project/bounded-pool-executor/) about maximal limit of work queue.
     """
 
     def submit(self, fn, *args, **kwargs):
@@ -119,11 +120,39 @@ class StackTraceExecutor(Executor):
 
 
 class StackTracedThreadPoolExecutor(StackTraceExecutor, ThreadPoolExecutor):
-    pass
+    def __init__(self, max_workers: Optional[int] = None, thread_name_prefix: str = '',
+                 initializer: Callable[..., None] = None, initargs: Tuple = (), max_work_queue_size: Optional[int] = None):
+        """Initializes a new ThreadPoolExecutor instance.
+
+        Args:
+            max_workers: The maximum number of threads that can be used to
+                execute the given calls.
+            thread_name_prefix: An optional name prefix to give our threads.
+            initializer: A callable used to initialize worker threads.
+            initargs: A tuple of arguments to pass to the initializer.
+        """
+        super().__init__(max_workers=max_workers, thread_name_prefix=thread_name_prefix,
+                         initializer=initializer, initargs=initargs)
+        self._work_queue = Queue(maxsize=max_work_queue_size)
+        gc.collect()
 
 
 class StackTracedProcessPoolExecutor(StackTraceExecutor, ProcessPoolExecutor):
-    pass
+    def __init__(self, max_workers: Optional[int] = None,
+                 initializer: Callable[..., None] = None, initargs: Tuple = (), max_work_queue_size: Optional[int] = None):
+        """Initializes a new ThreadPoolExecutor instance.
+
+        Args:
+            max_workers: The maximum number of threads that can be used to
+                execute the given calls.
+            thread_name_prefix: An optional name prefix to give our threads.
+            initializer: A callable used to initialize worker threads.
+            initargs: A tuple of arguments to pass to the initializer.
+        """
+        super().__init__(max_workers=max_workers,
+                         initializer=initializer, initargs=initargs)
+        self._work_ids = Queue(maxsize=max_work_queue_size)
+        gc.collect()
 
 
 class PipePoolFuture(Future):
@@ -263,13 +292,14 @@ class PipeProcessPoolExecutor(StackTracedThreadPoolExecutor):
         initargs: Optional[Tuple[Any, ...]] = None,
         # logger: Optional[Logger] = None,
         mp_method: Optional[str] = None,
-        thread_sleep: Optional[float] = None
+        thread_sleep: Optional[float] = None, max_work_queue_size: Optional[int] = None
     ) -> None:
 
         if max_workers is None:
             max_workers = 1 + (cpu_count() * 2)
 
-        super().__init__(max_workers, thread_name_prefix, initializer, initargs)
+        super().__init__(max_workers=max_workers, thread_name_prefix=thread_name_prefix,
+                         initializer=initializer, initargs=initargs, max_work_queue_size=max_work_queue_size)
         # self.logger = getLogger() if (logger is None) else logger
         self.mp_method = mp_method
         self.thread_sleep = thread_sleep
