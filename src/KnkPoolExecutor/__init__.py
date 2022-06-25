@@ -121,7 +121,7 @@ class StackTraceExecutor(Executor):
 
 class StackTracedThreadPoolExecutor(StackTraceExecutor, ThreadPoolExecutor):
     def __init__(self, max_workers: Optional[int] = None, thread_name_prefix: str = '',
-                 initializer: Callable[..., None] = None, initargs: Tuple = (), max_work_queue_size: Optional[int] = None):
+                 initializer: Callable[..., None] = None, initargs: Tuple = (), max_work_queue_size: int = 0):
         """Initializes a new ThreadPoolExecutor instance.
 
         Args:
@@ -139,7 +139,7 @@ class StackTracedThreadPoolExecutor(StackTraceExecutor, ThreadPoolExecutor):
 
 class StackTracedProcessPoolExecutor(StackTraceExecutor, ProcessPoolExecutor):
     def __init__(self, max_workers: Optional[int] = None,
-                 initializer: Callable[..., None] = None, initargs: Tuple = (), max_work_queue_size: Optional[int] = None):
+                 initializer: Callable[..., None] = None, initargs: Tuple = (), max_work_queue_size: int = 0):
         """Initializes a new ThreadPoolExecutor instance.
 
         Args:
@@ -292,7 +292,8 @@ class PipeProcessPoolExecutor(StackTracedThreadPoolExecutor):
         initargs: Optional[Tuple[Any, ...]] = None,
         # logger: Optional[Logger] = None,
         mp_method: Optional[str] = None,
-        thread_sleep: Optional[float] = None, max_work_queue_size: Optional[int] = None
+        thread_sleep: Optional[float] = None,
+        max_work_queue_size: int = 0
     ) -> None:
 
         if max_workers is None:
